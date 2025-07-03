@@ -17,6 +17,7 @@ return new class extends Migration
             $table->decimal('strength_rating', 3, 2)->comment('must be between 0.00 and 1.00');
             $table->string('logo_url')->nullable();
             $table->string('short_name', 3)->comment('CHE, ARS, LIV, MCI');
+            $table->bigInteger('external_id')->nullable()->comment('ID from external API');
             $table->timestamps();
         });
     }

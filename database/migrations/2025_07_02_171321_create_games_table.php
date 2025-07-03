@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('games', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('team_home_id')->constrained('teams');
-            $table->foreignId('team_away_id')->constrained('teams');
+            $table->bigInteger('team_home_id');
+            $table->bigInteger('team_away_id');
             $table->integer('home_goals')->nullable();
             $table->integer('away_goals')->nullable();
             $table->integer('week');
