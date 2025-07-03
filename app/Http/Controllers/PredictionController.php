@@ -15,16 +15,17 @@ class PredictionController extends Controller
     {
         $this->predictionEngine = $predictionEngine;
     }
-
     /**
      * @return JsonResponse
      */
     public function getFinalPredictions(): JsonResponse
     {
-        $predictions = $this->predictionEngine->predictFinalTable();
+        $predictionData = $this->predictionEngine->predictFinalTable();
 
-
-        return $this->success('Final predictions', $predictions);
+        if ($predictionData['season_complete']) {
+            return $this->success('Final season results', $predictionData);
+        } else {
+            return $this->success('Season predictions', $predictionData);
+        }
     }
-
 }

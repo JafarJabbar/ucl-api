@@ -11,3 +11,4 @@ Route::post('/play-all', [LeagueController::class, 'playAllRemaining']);
 Route::get('/predictions', [PredictionController::class, 'getFinalPredictions']);
 Route::put('/matches/{id}', [LeagueController::class, 'updateMatchResult']);
 Route::post('/matches/{id}/reset', [LeagueController::class, 'resetMatch']);
+Route::post('/reset-all', [LeagueController::class, 'resetAll']);

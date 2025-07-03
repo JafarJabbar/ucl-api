@@ -80,4 +80,6 @@ class LeagueCalculator
             $standing->update(['position' => $index + 1]);
         }
     }
+
+
 }

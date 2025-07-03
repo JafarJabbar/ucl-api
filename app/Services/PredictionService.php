@@ -12,22 +12,45 @@ class PredictionService {
             ->orderBy('goals_for', 'desc')
             ->get();
 
+        $totalMatches = Game::count();
+        $completedMatches = Game::where('is_finished', 1)->count();
+        $isSeasonComplete = $totalMatches > 0 && $completedMatches === $totalMatches;
+
         $predictions = [];
 
-        foreach ($currentStandings as $standing) {
-            $remainingMatches = $this->getRemainingMatches($standing->team_id);
-            $projectedPoints = $this->projectPoints($standing, $remainingMatches);
+        foreach ($currentStandings as $index => $standing) {
+            if ($isSeasonComplete) {
+                $predictions[] = [
+                    'team_id' => $standing->team_id,
+                    'team_name' => $standing->team?->name,
+                    'current_points' => $standing->points,
+                    'projected_points' => $standing->points, // Same as current when complete
+                    'final_position' => $index + 1,
+                    'championship_probability' => $index === 0 ? 1.0 : 0.0, // 100% for winner, 0% for others
+                    'is_season_complete' => true
+                ];
+            } else {
+                // Season in progress - show predictions
+                $remainingMatches = $this->getRemainingMatches($standing->team_id);
+                $projectedPoints = $this->projectPoints($standing, $remainingMatches);
 
-            $predictions[] = [
-                'team_id' => $standing->team_id,
-                'team_name' => $standing->team?->name,
-                'current_points' => $standing->points,
-                'projected_points' => $projectedPoints,
-                'championship_probability' => $this->calculateChampionshipProbability($standing, $projectedPoints)
-            ];
+                $predictions[] = [
+                    'team_id' => $standing->team_id,
+                    'team_name' => $standing->team?->name,
+                    'current_points' => $standing->points,
+                    'projected_points' => $projectedPoints,
+                    'championship_probability' => $this->calculateChampionshipProbability($standing, $projectedPoints),
+                    'is_season_complete' => false
+                ];
+            }
         }
 
-        return $predictions;
+        return [
+            'predictions' => $predictions,
+            'season_complete' => $isSeasonComplete,
+            'matches_completed' => $completedMatches,
+            'total_matches' => $totalMatches
+        ];
     }
 
     private function projectPoints($standing, $remainingMatches) {

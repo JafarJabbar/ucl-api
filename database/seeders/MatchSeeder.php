@@ -23,7 +23,6 @@ class MatchSeeder extends Seeder
         echo "Creating fixtures for 4 teams: " . $teams->pluck('name')->implode(', ') . "\n";
 
         $fixtures = [
-            // Round 1: Each team plays once
             ['week' => 1, 'home' => $teamIds[0], 'away' => $teamIds[1]], // Team1 vs Team2
             ['week' => 1, 'home' => $teamIds[2], 'away' => $teamIds[3]], // Team3 vs Team4
 
@@ -33,7 +32,6 @@ class MatchSeeder extends Seeder
             ['week' => 3, 'home' => $teamIds[0], 'away' => $teamIds[3]], // Team1 vs Team4
             ['week' => 3, 'home' => $teamIds[1], 'away' => $teamIds[2]], // Team2 vs Team3
 
-            // Round 2: Return fixtures (swap home/away)
             ['week' => 4, 'home' => $teamIds[1], 'away' => $teamIds[0]], // Team2 vs Team1
             ['week' => 4, 'home' => $teamIds[3], 'away' => $teamIds[2]], // Team4 vs Team3
 

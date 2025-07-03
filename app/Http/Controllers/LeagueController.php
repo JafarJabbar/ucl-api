@@ -58,16 +58,22 @@ class LeagueController extends Controller
      */
     public function playNextWeek(): JsonResponse
     {
-        $simulator = new GameSimulator();
-        $calculator = new LeagueCalculator();
+        $nextWeek = Game::pending()->min('week');
 
-        $nextWeek = Game::pending()
-            ->min('week');
-
+        if (!$nextWeek) {
+            return $this->error('No more weeks to play. All matches have been completed!', 400);
+        }
 
         $matches = Game::pending()
             ->where('week', $nextWeek)
             ->get();
+
+        if ($matches->isEmpty()) {
+            return $this->error('No matches found for the next week.', 400);
+        }
+
+        $simulator = new GameSimulator();
+        $calculator = new LeagueCalculator();
 
         foreach ($matches as $match) {
             $result = $simulator->simulateGame($match->homeTeam, $match->awayTeam);
@@ -81,7 +87,10 @@ class LeagueController extends Controller
 
         $calculator->updateStandings();
 
-        return $this->success('Week completed', []);
+        return $this->success("Week {$nextWeek} completed successfully!", [
+            'week' => $nextWeek,
+            'matches_played' => $matches->count()
+        ]);
     }
 
     /**
@@ -89,15 +98,19 @@ class LeagueController extends Controller
      */
     public function playAllRemaining(): JsonResponse
     {
-        $simulator = new GameSimulator();
-        $calculator = new LeagueCalculator();
-
         $pendingWeeks = Game::pending()
             ->distinct('week')
             ->pluck('week')
             ->sort();
 
+        if ($pendingWeeks->isEmpty()) {
+            return $this->error('No remaining matches to play. All matches have been completed!', 400);
+        }
+
+        $simulator = new GameSimulator();
+        $calculator = new LeagueCalculator();
         $results = [];
+        $totalMatchesPlayed = 0;
 
         foreach ($pendingWeeks as $week) {
             $weekMatches = Game::where('week', $week)
@@ -121,13 +134,15 @@ class LeagueController extends Controller
                     'away_team' => $match->awayTeam->name,
                     'result' => $result['home_goals'] . '-' . $result['away_goals']
                 ];
+
+                $totalMatchesPlayed++;
             }
 
             $calculator->updateStandings();
-            $results[$week] = $weekResults;
+            $results["week_{$week}"] = $weekResults;
         }
 
-        return $this->success('List of standings', $results);
+        return $this->success("All remaining matches completed! Played {$totalMatchesPlayed} matches across " . count($pendingWeeks) . " weeks.", $results);
     }
 
     public function updateMatchResult(Request $request, $id)
@@ -138,8 +153,7 @@ class LeagueController extends Controller
         ]);
 
         try {
-            $match = Game::find($id);
-            if (!$match) return $this->error('Match not found', 404);
+            $match = Game::findOrFail($id);
 
             $match->update([
                 'home_goals' => $request->home_goals,
@@ -167,12 +181,8 @@ class LeagueController extends Controller
     public function resetMatch($id)
     {
         try {
-            $match = Game::find($id);
+            $match = Game::findOrFail($id);
 
-
-            if (!$match) {
-                return $this->error('Match not found', 404);
-            }
             $match->update([
                 'home_goals' => null,
                 'away_goals' => null,
@@ -191,6 +201,47 @@ class LeagueController extends Controller
                 'Error resetting match: ' . $e->getMessage(),
             );
             return $this->error('Error updating match reset');
+        }
+    }
+
+    /**
+     * Reset all matches and standings to initial state
+     * @return JsonResponse
+     */
+    public function resetAll(): JsonResponse
+    {
+        try {
+            // Reset all matches to initial state
+            Game::query()->update([
+                'home_goals' => null,
+                'away_goals' => null,
+                'is_finished' => 0,
+                'played_at' => null
+            ]);
+
+            LeagueStanding::query()->update([
+                'points' => 0,
+                'played' => 0,
+                'won' => 0,
+                'drawn' => 0,
+                'lost' => 0,
+                'goals_for' => 0,
+                'goals_against' => 0,
+                'goal_difference' => 0,
+                'position' => 0
+            ]);
+
+            return $this->success('All matches and standings reset successfully!', [
+                'matches_reset' => Game::count(),
+                'standings_reset' => LeagueStanding::count()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::write('error',
+                'Error resetting all data: ' . $e->getMessage(),
+            );
+
+            return $this->error('Error resetting all data');
         }
     }
 
