@@ -132,15 +132,10 @@ class TeamManagementService
         try {
             $team = Team::findOrFail($teamId);
 
-            // Delete related games
             Game::where('team_home_id', $teamId)
                 ->orWhere('team_away_id', $teamId)
                 ->delete();
-
-            // Delete league standing
             LeagueStanding::where('team_id', $teamId)->delete();
-
-            // Delete team
             $team->delete();
 
             DB::commit();
@@ -187,7 +182,7 @@ class TeamManagementService
     public function validateTeamsForFixtures(): bool
     {
         $teamCount = Team::count();
-        return $teamCount >= 2 && $teamCount % 2 === 0; // Need even number of teams, minimum 2
+        return $teamCount >= 2 && $teamCount % 2 === 0;
     }
 
     /**

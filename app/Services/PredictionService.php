@@ -24,13 +24,12 @@ class PredictionService {
                     'team_id' => $standing->team_id,
                     'team_name' => $standing->team?->name,
                     'current_points' => $standing->points,
-                    'projected_points' => $standing->points, // Same as current when complete
+                    'projected_points' => $standing->points,
                     'final_position' => $index + 1,
-                    'championship_probability' => $index === 0 ? 1.0 : 0.0, // 100% for winner, 0% for others
+                    'championship_probability' => $index === 0 ? 1.0 : 0.0,
                     'is_season_complete' => true
                 ];
             } else {
-                // Season in progress - show predictions
                 $remainingMatches = $this->getRemainingMatches($standing->team_id);
                 $projectedPoints = $this->projectPoints($standing, $remainingMatches);
 

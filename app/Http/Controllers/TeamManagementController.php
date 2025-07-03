@@ -110,7 +110,7 @@ class TeamManagementController extends Controller
     {
         try {
             $this->teamService->deleteTeam((int)$id);
-            return $this->success('Team deleted successfully!');
+            return $this->success('Team deleted successfully!',[]);
         } catch (\Exception $e) {
             Log::error('Error deleting team: ' . $e->getMessage());
             return $this->error('Error deleting team: ' . $e->getMessage());

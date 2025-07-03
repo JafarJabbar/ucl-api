@@ -32,7 +32,6 @@ class FixtureGeneratorService
 
             if ($clearExisting) {
                 Game::query()->delete();
-                // Reset league standings
                 LeagueStanding::query()->update([
                     'points' => 0,
                     'played' => 0,
@@ -93,19 +92,15 @@ class FixtureGeneratorService
         $teamIds = $teams->pluck('id')->toArray();
         $fixtures = [];
 
-        // Generate single round-robin
         $singleRoundFixtures = $this->generateSingleRoundRobin($teamIds);
 
-        // Add fixtures for each round
         for ($round = 1; $round <= $rounds; $round++) {
             foreach ($singleRoundFixtures as $weekIndex => $weekFixtures) {
                 $adjustedWeek = ($round - 1) * count($singleRoundFixtures) + $weekIndex;
 
                 if ($round === 1) {
-                    // First round - home/away as generated
                     $fixtures[$adjustedWeek] = $weekFixtures;
                 } else {
-                    // Subsequent rounds - swap home/away
                     $fixtures[$adjustedWeek] = array_map(function($fixture) {
                         return [
                             'home_id' => $fixture['away_id'],
@@ -120,7 +115,7 @@ class FixtureGeneratorService
     }
 
     /**
-     * Generate single round-robin using round-robin algorithm
+     * Generate single round-robin
      * @param array $teamIds
      * @return array
      */
@@ -129,9 +124,8 @@ class FixtureGeneratorService
         $teamCount = count($teamIds);
         $fixtures = [];
 
-        // If odd number of teams, add a "bye" team
         if ($teamCount % 2 !== 0) {
-            $teamIds[] = null; // null represents bye
+            $teamIds[] = null;
             $teamCount++;
         }
 
@@ -145,12 +139,10 @@ class FixtureGeneratorService
                 $home = ($round + $match) % ($teamCount - 1);
                 $away = ($teamCount - 1 - $match + $round) % ($teamCount - 1);
 
-                // The last team always plays against the rotating teams
                 if ($match === 0) {
                     $away = $teamCount - 1;
                 }
 
-                // Skip if either team is null (bye)
                 if ($teamIds[$home] === null || $teamIds[$away] === null) {
                     continue;
                 }
@@ -170,7 +162,7 @@ class FixtureGeneratorService
     }
 
     /**
-     * Preview fixtures without saving to database
+     * Preview fixtures
      * @param int $rounds
      * @return array
      */

@@ -211,7 +211,6 @@ class LeagueController extends Controller
     public function resetAll(): JsonResponse
     {
         try {
-            // Reset all matches to initial state
             Game::query()->update([
                 'home_goals' => null,
                 'away_goals' => null,

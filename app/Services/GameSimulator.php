@@ -57,7 +57,7 @@ class GameSimulator
         } while ($p > $l);
 
 
-        //Goal count
+        //Get Goal count
         return max(0, min($k - 1, 6));
     }
 }
